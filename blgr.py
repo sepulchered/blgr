@@ -1,9 +1,10 @@
-#!/usr/bin/python3.4
+#!/usr/bin/python3
 import os
 import json
 import shutil
 import datetime
 import argparse
+from subprocess import call
 
 
 class Command(type):
@@ -34,10 +35,10 @@ class Create(BlgrCommand):
     _command = 'create'
 
     def add_args(self):
-        self.parser.add_argument('type', metavar='TYPE', help='type of item to create',
-                                 choices=['post', 'page'])
+        pass
 
     def prepare(self):
+        self.post_data = {}
         resp = None
         while resp not in ('y', 'n', ''):
             resp = input('Would you like to provide post metadata now {y/[n]}')
@@ -52,7 +53,7 @@ class Create(BlgrCommand):
         post_data['category'] = input('Post category: ')
         sl = None
         while sl not in ('y', 'n', ''):
-            sl = input('Set post link in menu [False]')
+            sl = input('Set post link in menu {y/[n]}')
         if sl == 'y':
             post_data['set_link'] = True
         elif sl in ('', 'n'):
@@ -87,9 +88,66 @@ class Generate(BlgrCommand):
         pass
 
     def prepare(self):
-        pass
+        posts_path = self.config['posts']['path']
+
+        self.posts = {}
+        post_dirs = (d for d in os.listdir(posts_path) if os.path.isdir(os.path.join(posts_path, d)))
+        for pd in post_dirs:
+            pp = os.path.join(posts_path, pd)
+            with open(os.path.join(pp, 'meta.json'), 'r') as meta_file:
+                meta = json.load(meta_file)
+            self.posts[pp] = meta
+
+        self.categories = {}
+        self.dts = {}
+        for pp, data in self.posts.items():
+            cat = data['category'] if data['category'] else 'uncategorized'
+            self.categories.setdefault(cat, []).append(pp)
+            dt = datetime.datetime.strptime(data['dt'], '%Y-%m-%dT%H:%M:%S.%f')
+            self.dts.setdefault(dt.year, {}).setdefault(dt.month, {}).setdefault(dt.day, []).append(pp)
 
     def execute(self):
+        prj_path = os.path.abspath(os.path.dirname(__file__))
+        out_path = self.config['output']['path']
+
+        if not os.path.exists(out_path):
+            os.makedirs(out_path)
+
+        for year in self.dts:
+            year_path = os.path.join(out_path, str(year))
+            if not os.path.exists(year_path):
+                os.mkdir(year_path)
+            for month in self.dts[year]:
+                month_path = os.path.join(year_path, str(month))
+                if not os.path.exists(month_path):
+                    os.mkdir(month_path)
+                for day in self.dts[year][month]:
+                    day_path = os.path.join(month_path, str(day))
+                    if not os.path.exists(day_path):
+                        os.mkdir(day_path)
+                    for post in self.dts[year][month][day]:
+                        os.chdir(prj_path)
+                        slug_path = os.path.join(day_path, self.posts[post]['slug'])
+                        if not os.path.exists(slug_path):
+                            os.mkdir(slug_path)
+
+                        fls = os.listdir(post)
+                        psts = [pst for pst in fls if pst.endswith('.ipynb')]
+                        pp = os.path.join(prj_path, post, psts[0])
+                        print(pp)
+                        os.chdir(slug_path)
+                        call(['ipython', 'nbconvert', '--to', 'html', pp, 'index.html'])
+                        psts_html = os.listdir('./')
+                        if psts_html:
+                            os.rename(psts_html[0], 'index.html')
+                            self._append_html('index.html', self.posts[post])
+
+        self._generate_index()
+
+    def _append_html(self, filename, meta):
+        pass
+
+    def _generate_index(self):
         pass
 
 
