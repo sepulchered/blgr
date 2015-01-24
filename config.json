@@ -2,9 +2,6 @@
   "posts": {
     "path": "./posts"
   },
-  "pages": {
-    "path": "./pages"
-  },
   "output": {
     "path": "./output"
   }

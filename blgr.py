@@ -37,7 +37,7 @@ class Create(BlgrCommand):
         self.parser.add_argument('type', metavar='TYPE', help='type of item to create',
                                  choices=['post', 'page'])
 
-    def _prepare_post(self):
+    def prepare(self):
         resp = None
         while resp not in ('y', 'n', ''):
             resp = input('Would you like to provide post metadata now {y/[n]}')
@@ -45,16 +45,21 @@ class Create(BlgrCommand):
         if resp == 'y':
             self._ask_post_meta()
 
-        self._create_post()
-
     def _ask_post_meta(self):
         post_data = {}
         post_data['title'] = input('Post title: ')
         post_data['slug'] = input('Post slug: ')
         post_data['category'] = input('Post category: ')
+        sl = None
+        while sl not in ('y', 'n', ''):
+            sl = input('Set post link in menu [False]')
+        if sl == 'y':
+            post_data['set_link'] = True
+        elif sl in ('', 'n'):
+            post_data['set_link'] = False
         self.post_data = post_data
 
-    def _create_post(self):
+    def execute(self):
         dt = datetime.datetime.now()
         ts = dt.strftime('%Y-%m-%d-%H')
         slug = self.post_data.setdefault('slug', 'post')
@@ -69,20 +74,10 @@ class Create(BlgrCommand):
         with open(os.path.join(post_dir, 'meta.json'), 'w') as meta:
             json.dump({'title': self.post_data.setdefault('title', ''),
                        'slug': self.post_data.setdefault('slug', ''),
-                       'category': self.post_data.setdefault('category'),
-                       'dt': dt.isoformat()}, meta)
-
-    def _prepare_page(self):
-        pass
-
-    def prepare(self):
-        if self.type == 'post':
-            self._prepare_post()
-        elif self.type == 'page':
-            self._prepare_page()
-
-    def execute(self):
-        pass
+                       'category': self.post_data.setdefault('category', ''),
+                       'dt': dt.isoformat(),
+                       'set_link': self.post_data.setdefault('set_link', False)},
+                      meta)
 
 
 class Generate(BlgrCommand):
