@@ -55,3 +55,8 @@ target/
 
 # PyCharm
 .idea
+
+# blgr ignore
+.ipynb_checkpoints
+posts
+pages
