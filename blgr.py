@@ -1,5 +1,6 @@
 #!/usr/bin/python3.4
 import argparse
+import json
 
 
 class Command(type):
@@ -14,6 +15,7 @@ class BlgrCommand(metaclass=Command):
     def __init__(self):
         super().__init__()
         self.parser = None
+        self.config = None
 
     def add_args(self):
         raise NotImplementedError
@@ -54,7 +56,15 @@ class Generate(BlgrCommand):
 
 class BlgrCli():
     def __init__(self):
+        self._read_config()
         self._process()
+
+    def _read_config(self):
+        config = None
+        with open('config.json', 'r') as conf:
+            config = json.load(conf)
+
+        self.config = config
 
     def _process(self):
         parser = argparse.ArgumentParser(description='blgr cli')
@@ -68,6 +78,7 @@ class BlgrCli():
         cmd = args.cmd
         parser.parse_args(namespace=cmd)
 
+        cmd.config = self.config
         cmd.prepare()
         cmd.execute()
 

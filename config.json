@@ -1,0 +1,8 @@
+{
+  "posts": {
+    "path": "./posts"
+  },
+  "pages": {
+    "path": "./pages"
+  }
+}
