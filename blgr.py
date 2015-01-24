@@ -7,24 +7,18 @@ class Command(type):
         if not hasattr(cls, 'commands'):
             cls.commands = {}
         else:
-            cls.commands[cls._command] = cls
+            cls.commands[cls._command] = cls()
 
 
 class BlgrCommand(metaclass=Command):
-    def __init__(self, args):
+    def __init__(self):
         super().__init__()
-        self._process_args(args)
-        self._prepare()
+        self.parser = None
 
-    def _process_args(self, args):
-        self.parser = argparse.ArgumentParser(description='blgr {}'.format(self._command))
-        self._add_args()
-        self.parser.parse_args(args, namespace=self)
-
-    def _add_args(self):
+    def add_args(self):
         raise NotImplementedError
 
-    def _prepare(self):
+    def prepare(self):
         raise NotImplementedError
 
     def execute(self):
@@ -34,10 +28,24 @@ class BlgrCommand(metaclass=Command):
 class Create(BlgrCommand):
     _command = 'create'
 
-    def _add_args(self):
-        self.parser.add_argument('item', metavar='ITEM', help='item to create')
+    def add_args(self):
+        self.parser.add_argument('type', metavar='TYPE', help='type of item to create',
+                                 choices=['post', 'page'])
 
-    def _prepare(self):
+    def prepare(self):
+        pass
+
+    def execute(self):
+        pass
+
+
+class Generate(BlgrCommand):
+    _command = 'generate'
+
+    def add_args(self):
+        pass
+
+    def prepare(self):
         pass
 
     def execute(self):
@@ -46,23 +54,22 @@ class Create(BlgrCommand):
 
 class BlgrCli():
     def __init__(self):
-        self._process_args()
-        self._process_command()
+        self._process()
 
-    def _process_args(self):
-        self.parser = argparse.ArgumentParser(description='blgr cli')
-        self.parser.add_argument('command', metavar='COMMAND',
-                                 help='blgr command to execute',
-                                 choices=[cmd for cmd in BlgrCommand.commands])
-        _, self.command_args = self.parser.parse_known_args(namespace=self)
+    def _process(self):
+        parser = argparse.ArgumentParser(description='blgr cli')
 
-    def _process_command(self):
-        if self.command not in BlgrCommand.commands:
-            self.parser.error('invalid command "{}" provided'.format(self.command))
+        subparsers = parser.add_subparsers(help='command')
+        for name, cmd in BlgrCommand.commands.items():
+            cmd.parser = subparsers.add_parser(name)
+            cmd.add_args()
+            cmd.parser.set_defaults(cmd=cmd)
+        args = parser.parse_args()
+        cmd = args.cmd
+        parser.parse_args(namespace=cmd)
 
-        cmd = BlgrCommand.commands[self.command](self.command_args)
+        cmd.prepare()
         cmd.execute()
-
 
 if __name__ == '__main__':
     blgr = BlgrCli()
