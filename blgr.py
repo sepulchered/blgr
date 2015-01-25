@@ -4,6 +4,8 @@ import json
 import shutil
 import datetime
 import argparse
+import http.server
+import socketserver
 from subprocess import call
 
 
@@ -103,32 +105,53 @@ class Generate(BlgrCommand):
                 meta = json.load(meta_file)
             self.posts[pp] = meta
 
-        self.categories = {}
         self.dts = {}
+        self.pages = []
         for pp, data in self.posts.items():
-            cat = data['category'] if data['category'] else 'uncategorized'
-            self.categories.setdefault(cat, []).append(pp)
-            dt = datetime.datetime.strptime(data['dt'], '%Y-%m-%dT%H:%M:%S.%f')
-            self.dts.setdefault(dt.year, {}).setdefault(dt.month, {}).setdefault(dt.day, []).append(pp)
+            if not data['set_link']:
+                dt = datetime.datetime.strptime(data['dt'], '%Y-%m-%dT%H:%M:%S.%f')
+                self.dts.setdefault(dt.year, {}).setdefault(dt.month, {}).setdefault(dt.day, []).append(pp)
+            else:
+                self.pages.append(pp)
 
-    def execute(self):
-        prj_path = os.path.abspath(os.path.dirname(__file__))
+    def _generate_pages(self):
         out_path = self.config['output']['path']
+        prj_path = os.path.abspath(os.path.dirname(__file__))
 
+        for page in self.pages:
+            page_path = os.path.join(out_path, self.posts[page]['slug'])
+            if not os.path.exists(page_path):
+                os.mkdir(page_path)
+
+            fls = os.listdir(page)
+            psts = [pst for pst in fls if pst.endswith('.ipynb')]
+            pp = os.path.join(prj_path, page, psts[0])
+            os.chdir(page_path)
+            call(['ipython', 'nbconvert', '--to', 'html', pp, 'index.html'])
+            psts_html = os.listdir('./')
+            if psts_html:
+                os.rename(psts_html[0], 'index.html')
+            os.chdir(prj_path)
+
+    def _generate_posts(self):
+        out_path = self.config['output']['path']
+        prj_path = os.path.abspath(os.path.dirname(__file__))
         for year in self.dts:
             year_path = os.path.join(out_path, str(year))
             if not os.path.exists(year_path):
                 os.mkdir(year_path)
+
             for month in self.dts[year]:
                 month_path = os.path.join(year_path, str(month))
                 if not os.path.exists(month_path):
                     os.mkdir(month_path)
+
                 for day in self.dts[year][month]:
                     day_path = os.path.join(month_path, str(day))
                     if not os.path.exists(day_path):
                         os.mkdir(day_path)
+
                     for post in self.dts[year][month][day]:
-                        os.chdir(prj_path)
                         slug_path = os.path.join(day_path, self.posts[post]['slug'])
                         if not os.path.exists(slug_path):
                             os.mkdir(slug_path)
@@ -136,25 +159,36 @@ class Generate(BlgrCommand):
                         fls = os.listdir(post)
                         psts = [pst for pst in fls if pst.endswith('.ipynb')]
                         pp = os.path.join(prj_path, post, psts[0])
-                        print(pp)
                         os.chdir(slug_path)
                         call(['ipython', 'nbconvert', '--to', 'html', pp, 'index.html'])
                         psts_html = os.listdir('./')
                         if psts_html:
                             os.rename(psts_html[0], 'index.html')
+                        os.chdir(prj_path)
+
+    def execute(self):
+        self._generate_pages()
+        self._generate_posts()
+
+
 
 
 class Serve(BlgrCommand):
     _command = 'serve'
 
     def add_args(self):
-        pass
+        self.parser.add_argument('-p', '--port', type=int, default=8080,
+                                 required=False, help='port on which to start '
+                                                      'serving')
 
     def prepare(self):
-        pass
+        os.chdir(self.config['output']['path'])
 
     def execute(self):
-        pass
+        handler = http.server.SimpleHTTPRequestHandler
+        httpd = socketserver.TCPServer(('', self.port), handler)
+        print('serving at port {}'.format(self.port))
+        httpd.serve_forever()
 
 
 class BlgrCli():
