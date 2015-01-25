@@ -133,26 +133,53 @@ class Generate(BlgrCommand):
                 os.rename(psts_html[0], 'index.html')
             os.chdir(prj_path)
 
+    def _generate_year_index(self, year_path, posts):
+        pass
+
+    def _generate_month_index(self, month_path, posts):
+        pass
+
+    def _generate_day_index(self, day_path, posts):
+        pass
+
+    def _generate_category_index(self, category, posts):
+        pass
+
+    def _generate_categories(self, categories):
+        for cat in categories:
+            cat_path = os.path.join(self.config['output']['path'], cat)
+            if not os.path.exists(cat_path):
+                os.mkdir(cat_path)
+
+            self._generate_category_index(cat, categories[cat])
+
     def _generate_posts(self):
         out_path = self.config['output']['path']
         prj_path = os.path.abspath(os.path.dirname(__file__))
+        categories = {}
         for year in self.dts:
+            year_posts = []
             year_path = os.path.join(out_path, str(year))
             if not os.path.exists(year_path):
                 os.mkdir(year_path)
 
             for month in self.dts[year]:
+                month_posts = []
                 month_path = os.path.join(year_path, str(month))
                 if not os.path.exists(month_path):
                     os.mkdir(month_path)
 
                 for day in self.dts[year][month]:
+                    day_posts = []
                     day_path = os.path.join(month_path, str(day))
                     if not os.path.exists(day_path):
                         os.mkdir(day_path)
 
                     for post in self.dts[year][month][day]:
-                        slug_path = os.path.join(day_path, self.posts[post]['slug'])
+                        slug = self.posts[post]['slug']
+                        slug_path = os.path.join(day_path, slug)
+                        cat = self.posts[post]['category'] if self.posts[post]['category'] else 'uncategorized'
+                        categories.setdefault(cat, {})['/{}/{}/{}/{}/'.format(year, month, day, slug)] = self.posts[post]
                         if not os.path.exists(slug_path):
                             os.mkdir(slug_path)
 
@@ -165,6 +192,11 @@ class Generate(BlgrCommand):
                         if psts_html:
                             os.rename(psts_html[0], 'index.html')
                         os.chdir(prj_path)
+
+                    self._generate_day_index(day_path, day_posts)
+                self._generate_month_index(month_path, month_posts)
+            self._generate_year_index(year_path, year_posts)
+        self._generate_categories(categories)
 
     def execute(self):
         self._generate_pages()
