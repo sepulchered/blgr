@@ -88,6 +88,11 @@ class Generate(BlgrCommand):
         pass
 
     def prepare(self):
+        out_path = self.config['output']['path']
+        if os.path.exists(out_path):
+            shutil.rmtree(out_path)
+        os.makedirs(out_path)
+
         posts_path = self.config['posts']['path']
 
         self.posts = {}
@@ -109,9 +114,6 @@ class Generate(BlgrCommand):
     def execute(self):
         prj_path = os.path.abspath(os.path.dirname(__file__))
         out_path = self.config['output']['path']
-
-        if not os.path.exists(out_path):
-            os.makedirs(out_path)
 
         for year in self.dts:
             year_path = os.path.join(out_path, str(year))
@@ -140,14 +142,18 @@ class Generate(BlgrCommand):
                         psts_html = os.listdir('./')
                         if psts_html:
                             os.rename(psts_html[0], 'index.html')
-                            self._append_html('index.html', self.posts[post])
 
-        self._generate_index()
 
-    def _append_html(self, filename, meta):
+class Serve(BlgrCommand):
+    _command = 'serve'
+
+    def add_args(self):
         pass
 
-    def _generate_index(self):
+    def prepare(self):
+        pass
+
+    def execute(self):
         pass
 
 
