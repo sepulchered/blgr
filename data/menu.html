@@ -1,6 +1,5 @@
 <ul>
-  <li>menu1</li>
-  <li>menu2</li>
-  <li>menu3</li>
-  <li>menu4</li>
+  {% for page in pages %}
+    <li><a href="{{page['url']}}">{{page['title']}}</a></li>
+  {% endfor %}
 </ul>

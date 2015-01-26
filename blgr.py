@@ -9,6 +9,7 @@ import socketserver
 from subprocess import call
 
 import jinja2
+from bs4 import BeautifulSoup
 
 
 class Command(type):
@@ -138,12 +139,16 @@ class Generate(BlgrCommand):
             fls = os.listdir(page)
             psts = [pst for pst in fls if pst.endswith('.ipynb')]
             pp = os.path.join(self.prj_path, page, psts[0])
-            os.chdir(page_path)
-            call(['ipython', 'nbconvert', '--to', 'html', pp])
-            psts_html = os.listdir('./')
-            if psts_html:
-                os.rename(psts_html[0], 'index.html')
-            os.chdir(self.prj_path)
+            self._process_ipynb(page_path, pp)
+
+    def _generate_menu(self):
+        pages = []
+        for page in self.pages:
+            pd = self.posts[page]
+            pd['url'] = '/{}/'.format(pd['slug'])
+            pages.append(pd)
+        tmpl = self.tmpl_env.get_or_select_template('menu.html')
+        self.menu = tmpl.render({'pages': pages})
 
     def _generate_year_index(self, year_path, posts, year):
         indx_path = os.path.join(year_path, 'index.html')
@@ -183,6 +188,19 @@ class Generate(BlgrCommand):
 
             self._generate_category_index(cat, cat_path, categories[cat])
 
+    def _process_ipynb(self, out_path, post_path, comments=False):
+        os.chdir(out_path)
+        call(['ipython', 'nbconvert', '--to', 'html', post_path])
+        psts_html = os.listdir('./')
+        if psts_html:
+            os.rename(psts_html[0], 'index.html')
+
+        self._append_html(os.path.join(out_path, 'index.html'), comments)
+        os.chdir(self.prj_path)
+
+    def _append_html(self, path, comments):
+        pass
+
     def _generate_posts(self):
         out_path = self.config['output']['path']
         categories = {}
@@ -217,12 +235,8 @@ class Generate(BlgrCommand):
                         fls = os.listdir(post)
                         psts = [pst for pst in fls if pst.endswith('.ipynb')]
                         pp = os.path.join(self.prj_path, post, psts[0])
-                        os.chdir(slug_path)
-                        call(['ipython', 'nbconvert', '--to', 'html', pp])
-                        psts_html = os.listdir('./')
-                        if psts_html:
-                            os.rename(psts_html[0], 'index.html')
-                        os.chdir(self.prj_path)
+                        self._process_ipynb(slug_path, pp)
+
 
                     day_posts.append(pd)
                     month_posts.append(pd)
@@ -234,10 +248,9 @@ class Generate(BlgrCommand):
         self._generate_categories(categories)
 
     def execute(self):
+        self._generate_menu()
         self._generate_pages()
         self._generate_posts()
-
-
 
 
 class Serve(BlgrCommand):
