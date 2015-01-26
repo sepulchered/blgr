@@ -60,6 +60,14 @@ class Create(BlgrCommand):
             post_data['set_link'] = True
         elif sl in ('', 'n'):
             post_data['set_link'] = False
+
+        comments = None
+        while comments not in ('y', 'n', ''):
+            comments = input('Allow comments {[y]/n}')
+        if comments == 'n':
+            post_data['comments'] = False
+        elif comments in ('', 'y'):
+            post_data['comments'] = True
         self.post_data = post_data
 
     def execute(self):
