@@ -141,6 +141,10 @@ class Generate(BlgrCommand):
             pp = os.path.join(self.prj_path, page, psts[0])
             self._process_ipynb(page_path, pp)
 
+    def _generate_comments(self):
+        tmpl = self.tmpl_env.get_or_select_template('comments.html')
+        self.comments = tmpl.render({'disqus': self.config['disqus']})
+
     def _generate_menu(self):
         pages = []
         for page in self.pages:
@@ -195,11 +199,21 @@ class Generate(BlgrCommand):
         if psts_html:
             os.rename(psts_html[0], 'index.html')
 
-        self._append_html(os.path.join(out_path, 'index.html'), comments)
         os.chdir(self.prj_path)
+        self._append_html(os.path.join(out_path, 'index.html'), comments)
 
     def _append_html(self, path, comments):
-        pass
+        soup = BeautifulSoup(open(path))
+
+        menu = BeautifulSoup(self.menu)
+        comments_div = soup.find(id='notebook-container')
+        soup.body.insert(0, menu)
+        if comments:
+            comments = BeautifulSoup(self.comments)
+            comments_div.append(comments)
+        res = soup.prettify()
+        with open(path, 'w') as pg:
+            pg.write(res)
 
     def _generate_posts(self):
         out_path = self.config['output']['path']
@@ -235,7 +249,7 @@ class Generate(BlgrCommand):
                         fls = os.listdir(post)
                         psts = [pst for pst in fls if pst.endswith('.ipynb')]
                         pp = os.path.join(self.prj_path, post, psts[0])
-                        self._process_ipynb(slug_path, pp)
+                        self._process_ipynb(slug_path, pp, pd['comments'])
 
 
                     day_posts.append(pd)
@@ -249,6 +263,7 @@ class Generate(BlgrCommand):
 
     def execute(self):
         self._generate_menu()
+        self._generate_comments()
         self._generate_pages()
         self._generate_posts()
 
