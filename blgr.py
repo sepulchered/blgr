@@ -8,6 +8,8 @@ import http.server
 import socketserver
 from subprocess import call
 
+import jinja2
+
 
 class Command(type):
     def __init__(cls, *args, **kwargs):
@@ -87,6 +89,7 @@ class Create(BlgrCommand):
                        'slug': self.post_data.setdefault('slug', ''),
                        'category': self.post_data.setdefault('category', ''),
                        'dt': dt.isoformat(),
+                       'comments': self.post_data.setdefault('comments', False),
                        'set_link': self.post_data.setdefault('set_link', False)},
                       meta)
 
@@ -98,6 +101,9 @@ class Generate(BlgrCommand):
         pass
 
     def prepare(self):
+        self.prj_path = os.path.abspath(os.path.dirname(__file__))
+        jinja_loader = jinja2.FileSystemLoader(searchpath=os.path.join(self.prj_path, 'data/'))
+        self.tmpl_env = jinja2.Environment(loader=jinja_loader)
         out_path = self.config['output']['path']
         if os.path.exists(out_path):
             shutil.rmtree(out_path)
@@ -124,8 +130,6 @@ class Generate(BlgrCommand):
 
     def _generate_pages(self):
         out_path = self.config['output']['path']
-        prj_path = os.path.abspath(os.path.dirname(__file__))
-
         for page in self.pages:
             page_path = os.path.join(out_path, self.posts[page]['slug'])
             if not os.path.exists(page_path):
@@ -133,13 +137,13 @@ class Generate(BlgrCommand):
 
             fls = os.listdir(page)
             psts = [pst for pst in fls if pst.endswith('.ipynb')]
-            pp = os.path.join(prj_path, page, psts[0])
+            pp = os.path.join(self.prj_path, page, psts[0])
             os.chdir(page_path)
-            call(['ipython', 'nbconvert', '--to', 'html', pp, 'index.html'])
+            call(['ipython', 'nbconvert', '--to', 'html', pp])
             psts_html = os.listdir('./')
             if psts_html:
                 os.rename(psts_html[0], 'index.html')
-            os.chdir(prj_path)
+            os.chdir(self.prj_path)
 
     def _generate_year_index(self, year_path, posts):
         pass
@@ -150,8 +154,12 @@ class Generate(BlgrCommand):
     def _generate_day_index(self, day_path, posts):
         pass
 
-    def _generate_category_index(self, category, posts):
-        pass
+    def _generate_category_index(self, category, cat_path, posts):
+        indx_path = os.path.join(cat_path, 'index.html')
+        tmpl = self.tmpl_env.get_or_select_template('index.html')
+        indx = tmpl.render({'header': category, 'posts': posts})
+        with open(indx_path, 'w') as cindex:
+            cindex.write(indx)
 
     def _generate_categories(self, categories):
         for cat in categories:
@@ -159,11 +167,10 @@ class Generate(BlgrCommand):
             if not os.path.exists(cat_path):
                 os.mkdir(cat_path)
 
-            self._generate_category_index(cat, categories[cat])
+            self._generate_category_index(cat, cat_path, categories[cat])
 
     def _generate_posts(self):
         out_path = self.config['output']['path']
-        prj_path = os.path.abspath(os.path.dirname(__file__))
         categories = {}
         for year in self.dts:
             year_posts = []
@@ -187,19 +194,21 @@ class Generate(BlgrCommand):
                         slug = self.posts[post]['slug']
                         slug_path = os.path.join(day_path, slug)
                         cat = self.posts[post]['category'] if self.posts[post]['category'] else 'uncategorized'
-                        categories.setdefault(cat, {})['/{}/{}/{}/{}/'.format(year, month, day, slug)] = self.posts[post]
+                        pd = {'url': '/{}/{}/{}/{}/'.format(year, month, day, slug)}
+                        pd.update(self.posts[post])
+                        categories.setdefault(cat, []).append(pd)
                         if not os.path.exists(slug_path):
                             os.mkdir(slug_path)
 
                         fls = os.listdir(post)
                         psts = [pst for pst in fls if pst.endswith('.ipynb')]
-                        pp = os.path.join(prj_path, post, psts[0])
+                        pp = os.path.join(self.prj_path, post, psts[0])
                         os.chdir(slug_path)
-                        call(['ipython', 'nbconvert', '--to', 'html', pp, 'index.html'])
+                        call(['ipython', 'nbconvert', '--to', 'html', pp])
                         psts_html = os.listdir('./')
                         if psts_html:
                             os.rename(psts_html[0], 'index.html')
-                        os.chdir(prj_path)
+                        os.chdir(self.prj_path)
 
                     self._generate_day_index(day_path, day_posts)
                 self._generate_month_index(month_path, month_posts)
