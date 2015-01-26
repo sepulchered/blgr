@@ -145,14 +145,28 @@ class Generate(BlgrCommand):
                 os.rename(psts_html[0], 'index.html')
             os.chdir(self.prj_path)
 
-    def _generate_year_index(self, year_path, posts):
-        pass
+    def _generate_year_index(self, year_path, posts, year):
+        indx_path = os.path.join(year_path, 'index.html')
+        tmpl = self.tmpl_env.get_or_select_template('index.html')
+        indx = tmpl.render({'header': 'Year {}'.format(year), 'posts': posts})
+        with open(indx_path, 'w') as cindex:
+            cindex.write(indx)
 
-    def _generate_month_index(self, month_path, posts):
-        pass
+    def _generate_month_index(self, month_path, posts, year_month):
+        indx_path = os.path.join(month_path, 'index.html')
+        tmpl = self.tmpl_env.get_or_select_template('index.html')
+        indx = tmpl.render({'header': 'Year {} Month {}'.format(year_month[0], year_month[1]),
+                            'posts': posts})
+        with open(indx_path, 'w') as cindex:
+            cindex.write(indx)
 
-    def _generate_day_index(self, day_path, posts):
-        pass
+    def _generate_day_index(self, day_path, posts, year_month_day):
+        indx_path = os.path.join(day_path, 'index.html')
+        tmpl = self.tmpl_env.get_or_select_template('index.html')
+        indx = tmpl.render({'header': 'Year {} Month {} Day {}'.format(year_month_day[0], year_month_day[1],
+                                                                       year_month_day[2]), 'posts': posts})
+        with open(indx_path, 'w') as cindex:
+            cindex.write(indx)
 
     def _generate_category_index(self, category, cat_path, posts):
         indx_path = os.path.join(cat_path, 'index.html')
@@ -210,9 +224,13 @@ class Generate(BlgrCommand):
                             os.rename(psts_html[0], 'index.html')
                         os.chdir(self.prj_path)
 
-                    self._generate_day_index(day_path, day_posts)
-                self._generate_month_index(month_path, month_posts)
-            self._generate_year_index(year_path, year_posts)
+                    day_posts.append(pd)
+                    month_posts.append(pd)
+                    year_posts.append(pd)
+
+                    self._generate_day_index(day_path, day_posts, (year, month, day))
+                self._generate_month_index(month_path, month_posts, (year, month))
+            self._generate_year_index(year_path, year_posts, year)
         self._generate_categories(categories)
 
     def execute(self):
