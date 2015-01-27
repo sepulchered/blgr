@@ -103,12 +103,12 @@ class Generate(BlgrCommand):
 
     def prepare(self):
         self.prj_path = os.path.abspath(os.path.dirname(__file__))
+        self.out_path = self.config['output']['path']
         jinja_loader = jinja2.FileSystemLoader(searchpath=os.path.join(self.prj_path, 'data/'))
         self.tmpl_env = jinja2.Environment(loader=jinja_loader)
-        out_path = self.config['output']['path']
-        if os.path.exists(out_path):
-            shutil.rmtree(out_path)
-        os.makedirs(out_path)
+        if os.path.exists(self.out_path):
+            shutil.rmtree(self.out_path)
+        os.makedirs(self.out_path)
 
         posts_path = self.config['posts']['path']
 
@@ -129,10 +129,16 @@ class Generate(BlgrCommand):
             else:
                 self.pages.append(pp)
 
+    def _generate_main_indices(self, posts):
+        tmpl = self.tmpl_env.get_template('index.html')
+        main_indx_path = os.path.join(self.out_path, 'index.html')
+        main_indx = tmpl.render({'header': 'Main index', 'posts': posts, 'pages': self.menu_pages})
+        with open(main_indx_path, 'w') as indx:
+            indx.write(main_indx)
+
     def _generate_pages(self):
-        out_path = self.config['output']['path']
         for page in self.pages:
-            page_path = os.path.join(out_path, self.posts[page]['slug'])
+            page_path = os.path.join(self.out_path, self.posts[page]['slug'])
             if not os.path.exists(page_path):
                 os.mkdir(page_path)
 
@@ -142,45 +148,46 @@ class Generate(BlgrCommand):
             self._process_ipynb(page_path, pp)
 
     def _generate_comments(self):
-        tmpl = self.tmpl_env.get_or_select_template('comments.html')
+        tmpl = self.tmpl_env.get_template('comments.html')
         self.comments = tmpl.render({'disqus': self.config['disqus']})
 
     def _generate_menu(self):
-        pages = []
+        self.menu_pages = []
         for page in self.pages:
             pd = self.posts[page]
             pd['url'] = '/{}/'.format(pd['slug'])
-            pages.append(pd)
-        tmpl = self.tmpl_env.get_or_select_template('menu.html')
-        self.menu = tmpl.render({'pages': pages})
+            self.menu_pages.append(pd)
+        tmpl = self.tmpl_env.get_template('menu.html')
+        self.menu = tmpl.render({'pages': self.menu_pages})
 
     def _generate_year_index(self, year_path, posts, year):
         indx_path = os.path.join(year_path, 'index.html')
-        tmpl = self.tmpl_env.get_or_select_template('index.html')
+        tmpl = self.tmpl_env.get_template('index.html')
         indx = tmpl.render({'header': 'Year {}'.format(year), 'posts': posts})
         with open(indx_path, 'w') as cindex:
             cindex.write(indx)
 
     def _generate_month_index(self, month_path, posts, year_month):
         indx_path = os.path.join(month_path, 'index.html')
-        tmpl = self.tmpl_env.get_or_select_template('index.html')
+        tmpl = self.tmpl_env.get_template('index.html')
         indx = tmpl.render({'header': 'Year {} Month {}'.format(year_month[0], year_month[1]),
-                            'posts': posts})
+                            'posts': posts, 'pages': self.menu_pages})
         with open(indx_path, 'w') as cindex:
             cindex.write(indx)
 
     def _generate_day_index(self, day_path, posts, year_month_day):
         indx_path = os.path.join(day_path, 'index.html')
-        tmpl = self.tmpl_env.get_or_select_template('index.html')
+        tmpl = self.tmpl_env.get_template('index.html')
         indx = tmpl.render({'header': 'Year {} Month {} Day {}'.format(year_month_day[0], year_month_day[1],
-                                                                       year_month_day[2]), 'posts': posts})
+                                                                       year_month_day[2]),
+                            'posts': posts, 'pages': self.menu_pages})
         with open(indx_path, 'w') as cindex:
             cindex.write(indx)
 
     def _generate_category_index(self, category, cat_path, posts):
         indx_path = os.path.join(cat_path, 'index.html')
-        tmpl = self.tmpl_env.get_or_select_template('index.html')
-        indx = tmpl.render({'header': category, 'posts': posts})
+        tmpl = self.tmpl_env.get_template('index.html')
+        indx = tmpl.render({'header': category, 'posts': posts, 'pages': self.menu_pages})
         with open(indx_path, 'w') as cindex:
             cindex.write(indx)
 
@@ -216,11 +223,11 @@ class Generate(BlgrCommand):
             pg.write(res)
 
     def _generate_posts(self):
-        out_path = self.config['output']['path']
+        all_posts = []
         categories = {}
         for year in self.dts:
             year_posts = []
-            year_path = os.path.join(out_path, str(year))
+            year_path = os.path.join(self.out_path, str(year))
             if not os.path.exists(year_path):
                 os.mkdir(year_path)
 
@@ -250,6 +257,7 @@ class Generate(BlgrCommand):
                         psts = [pst for pst in fls if pst.endswith('.ipynb')]
                         pp = os.path.join(self.prj_path, post, psts[0])
                         self._process_ipynb(slug_path, pp, pd['comments'])
+                        all_posts.append(pd)
 
 
                     day_posts.append(pd)
@@ -260,6 +268,7 @@ class Generate(BlgrCommand):
                 self._generate_month_index(month_path, month_posts, (year, month))
             self._generate_year_index(year_path, year_posts, year)
         self._generate_categories(categories)
+        self._generate_main_indices(all_posts)
 
     def execute(self):
         self._generate_menu()
