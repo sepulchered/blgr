@@ -104,7 +104,7 @@ class Generate(BlgrCommand):
     def prepare(self):
         self.prj_path = os.path.abspath(os.path.dirname(__file__))
         self.out_path = self.config['output']['path']
-        jinja_loader = jinja2.FileSystemLoader(searchpath=os.path.join(self.prj_path, 'data/'))
+        jinja_loader = jinja2.FileSystemLoader(searchpath=os.path.join(self.prj_path, 'data/templates/'))
         self.tmpl_env = jinja2.Environment(loader=jinja_loader)
         if os.path.exists(self.out_path):
             shutil.rmtree(self.out_path)
