@@ -296,32 +296,36 @@ class Serve(BlgrCommand):
 
 
 class BlgrCli():
-    def __init__(self):
-        self._read_config()
-        self._process()
-
-    def _read_config(self):
-        config = None
-        with open('config.json', 'r') as conf:
-            config = json.load(conf)
-
-        self.config = config
-
-    def _process(self):
+    def process_cli_args(self, cli_args=None):
         parser = argparse.ArgumentParser(description='blgr cli')
+        parser.add_argument('-c', '--config_path', default='config.json', required=True, help='path to config file')
 
         subparsers = parser.add_subparsers(help='command')
         for name, cmd in BlgrCommand.commands.items():
             cmd.parser = subparsers.add_parser(name)
             cmd.add_args()
             cmd.parser.set_defaults(cmd=cmd)
-        args = parser.parse_args()
-        cmd = args.cmd
-        parser.parse_args(namespace=cmd)
+        if cli_args:
+            args = parser.parse_args(cli_args)
+        else:
+            args = parser.parse_args()
+        if hasattr(args, 'cmd'):
+            self.cmd = args.cmd
+            self.cmd.cli_args = vars(args)
 
-        cmd.config = self.config
-        cmd.prepare()
-        cmd.execute()
+    def read_config(self):
+        cfg = {}
+        with open(self.cmd.cli_args['config_path'], 'r') as cfgf:
+            cfg = json.load(cfgf)
+        self.cmd.config = cfg
+
+    def execute(self):
+        self.cmd.prepare()
+        self.cmd.execute()
 
 if __name__ == '__main__':
     blgr = BlgrCli()
+    blgr.process_cli_args()
+    blgr.read_config()
+    blgr.execute()
+
