@@ -42,7 +42,8 @@ class Create(BlgrCommand):
     def add_args(self):
         pass
 
-    def prepare(self):
+    def prepare(self, input=input):
+        self.prj_path = os.path.abspath(os.path.dirname(__file__))
         self.post_data = {}
         resp = None
         while resp not in ('y', 'n', ''):
@@ -51,14 +52,14 @@ class Create(BlgrCommand):
         if resp == 'y':
             self._ask_post_meta()
 
-    def _ask_post_meta(self):
+    def _ask_post_meta(self, input=input, set_link_input=input, comments_input=input):  # kwargs added for testing
         post_data = {}
         post_data['title'] = input('Post title: ')
         post_data['slug'] = input('Post slug: ')
         post_data['category'] = input('Post category: ')
         sl = None
         while sl not in ('y', 'n', ''):
-            sl = input('Set post link in menu {y/[n]}')
+            sl = set_link_input('Set post link in menu {y/[n]}')
         if sl == 'y':
             post_data['set_link'] = True
         elif sl in ('', 'n'):
@@ -66,7 +67,7 @@ class Create(BlgrCommand):
 
         comments = None
         while comments not in ('y', 'n', ''):
-            comments = input('Allow comments {[y]/n}')
+            comments = comments_input('Allow comments {[y]/n}')
         if comments == 'n':
             post_data['comments'] = False
         elif comments in ('', 'y'):
@@ -77,14 +78,14 @@ class Create(BlgrCommand):
         dt = datetime.datetime.now()
         ts = dt.strftime('%Y-%m-%d-%H')
         slug = self.post_data.setdefault('slug', 'post')
-        post_dir = os.path.join(self.config['posts']['path'],
+        post_dir = os.path.join(self.prj_path, self.config['posts']['path'],
                                 '-'.join((ts, slug)))
         post_name = '{}{}.{}'.format(slug, ts, 'ipynb')
 
         if not os.path.exists(post_dir):
             os.makedirs(post_dir)
 
-        shutil.copyfile('./data/empty.ipynb', os.path.join(post_dir, post_name))
+        shutil.copyfile(os.path.join(self.prj_path, 'data', 'empty.ipynb'), os.path.join(post_dir, post_name))
         with open(os.path.join(post_dir, 'meta.json'), 'w') as meta:
             json.dump({'title': self.post_data.setdefault('title', ''),
                        'slug': self.post_data.setdefault('slug', ''),
