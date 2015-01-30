@@ -108,16 +108,7 @@ class Generate(BlgrCommand):
         self.tmpl_env = jinja2.Environment(loader=jinja_loader)
 
         self._generate_out_path()
-
-        posts_path = self.config['posts']['path']
-
-        self.posts = {}
-        post_dirs = (d for d in os.listdir(posts_path) if os.path.isdir(os.path.join(posts_path, d)))
-        for pd in post_dirs:
-            pp = os.path.join(posts_path, pd)
-            with open(os.path.join(pp, 'meta.json'), 'r') as meta_file:
-                meta = json.load(meta_file)
-            self.posts[pp] = meta
+        self._generate_posts_dict()
 
         self.dts = {}
         self.pages = []
@@ -134,6 +125,15 @@ class Generate(BlgrCommand):
             shutil.rmtree(self.out_path)
         os.makedirs(self.out_path)
 
+    def _generate_posts_dict(self):
+        posts_path = self.config['posts']['path']
+        self.posts = {}
+        post_dirs = (d for d in os.listdir(posts_path) if os.path.isdir(os.path.join(posts_path, d)))
+        for pd in post_dirs:
+            pp = os.path.join(posts_path, pd)
+            with open(os.path.join(pp, 'meta.json'), 'r') as meta_file:
+                meta = json.load(meta_file)
+            self.posts[pp] = meta
 
     def _generate_main_indices(self, posts):
         tmpl = self.tmpl_env.get_template('index.html')
