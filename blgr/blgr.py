@@ -104,12 +104,10 @@ class Generate(BlgrCommand):
 
     def prepare(self):
         self.prj_path = os.path.abspath(os.path.dirname(__file__))
-        self.out_path = self.config['output']['path']
         jinja_loader = jinja2.FileSystemLoader(searchpath=os.path.join(self.prj_path, 'data/templates/'))
         self.tmpl_env = jinja2.Environment(loader=jinja_loader)
-        if os.path.exists(self.out_path):
-            shutil.rmtree(self.out_path)
-        os.makedirs(self.out_path)
+
+        self._generate_out_path()
 
         posts_path = self.config['posts']['path']
 
@@ -129,6 +127,13 @@ class Generate(BlgrCommand):
                 self.dts.setdefault(dt.year, {}).setdefault(dt.month, {}).setdefault(dt.day, []).append(pp)
             else:
                 self.pages.append(pp)
+
+    def _generate_out_path(self):
+        self.out_path = os.path.join(self.prj_path, self.config['output']['path'])
+        if os.path.exists(self.out_path):
+            shutil.rmtree(self.out_path)
+        os.makedirs(self.out_path)
+
 
     def _generate_main_indices(self, posts):
         tmpl = self.tmpl_env.get_template('index.html')
