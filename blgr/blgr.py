@@ -120,7 +120,7 @@ class Generate(BlgrCommand):
                 self.pages.append(pp)
 
     def _generate_out_path(self):
-        self.out_path = os.path.join(self.prj_path, self.config['output']['path'])
+        self.out_path = self.config['output']['path']
         if os.path.exists(self.out_path):
             shutil.rmtree(self.out_path)
         os.makedirs(self.out_path)
