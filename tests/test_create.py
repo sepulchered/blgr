@@ -2,7 +2,7 @@ import os
 import json
 import shutil
 import functools
-from unittest.mock import _patch_object
+from unittest.mock import patch
 
 from blgr.blgr import Create
 
@@ -18,12 +18,12 @@ def test_prepare():
     input_n = functools.partial(input_mock, 'n')
     input_enter = functools.partial(input_mock, '')
 
-    with _patch_object(create, '_ask_post_meta', return_value=None) as mock_user_interaction:
+    with patch.object(create, '_ask_post_meta', return_value=None) as mock_user_interaction:
         create.prepare(input_n)
         create.prepare(input_y)
     mock_user_interaction.assert_called_once_with()
 
-    with _patch_object(create, '_ask_post_meta', return_value=None) as mock_user_interaction:
+    with patch.object(create, '_ask_post_meta', return_value=None) as mock_user_interaction:
         create.prepare(input_enter)  # default behaviour
     assert not mock_user_interaction.called
 
