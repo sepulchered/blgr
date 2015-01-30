@@ -109,15 +109,7 @@ class Generate(BlgrCommand):
 
         self._generate_out_path()
         self._generate_posts_dict()
-
-        self.dts = {}
-        self.pages = []
-        for pp, data in self.posts.items():
-            if not data['set_link']:
-                dt = datetime.datetime.strptime(data['dt'], '%Y-%m-%dT%H:%M:%S.%f')
-                self.dts.setdefault(dt.year, {}).setdefault(dt.month, {}).setdefault(dt.day, []).append(pp)
-            else:
-                self.pages.append(pp)
+        self._generate_pages_dts()
 
     def _generate_out_path(self):
         self.out_path = self.config['output']['path']
@@ -134,6 +126,16 @@ class Generate(BlgrCommand):
             with open(os.path.join(pp, 'meta.json'), 'r') as meta_file:
                 meta = json.load(meta_file)
             self.posts[pp] = meta
+
+    def _generate_pages_dts(self):
+        self.dts = {}
+        self.pages = []
+        for pp, data in self.posts.items():
+            if not data['set_link']:
+                dt = datetime.datetime.strptime(data['dt'], '%Y-%m-%dT%H:%M:%S.%f')
+                self.dts.setdefault(dt.year, {}).setdefault(dt.month, {}).setdefault(dt.day, []).append(pp)
+            else:
+                self.pages.append(pp)
 
     def _generate_main_indices(self, posts):
         tmpl = self.tmpl_env.get_template('index.html')
