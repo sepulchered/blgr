@@ -78,15 +78,13 @@ def test_execute():
                       'comments': True}
     create.post_data = mock_post_data
 
-    config_path = 'blgr/config.json'
-    with open(config_path, 'r') as cfg:
-        config = json.load(cfg)
+    conf = {'posts': {'path': './posts'}}
 
-    create.config = config
+    create.config = conf
     create.prj_path = 'blgr/'
     create.execute()
 
-    posts_path = os.path.join(create.prj_path, config['posts']['path'])
+    posts_path = os.path.join(create.prj_path, conf['posts']['path'])
     posts = os.listdir(posts_path)
     assert len(posts)
     post_path = os.path.join(posts_path, posts[0])
@@ -109,4 +107,4 @@ def test_execute():
     assert meta.get('comments', None) == mock_post_data['comments']
 
     # clean up posts folder
-    shutil.rmtree(os.path.join('blgr', config['posts']['path']))
+    shutil.rmtree(os.path.join('blgr', conf['posts']['path']))
