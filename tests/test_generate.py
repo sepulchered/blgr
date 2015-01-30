@@ -97,6 +97,8 @@ def test_pages_dts():
     generate._generate_pages_dts()
 
     assert len(generate.pages) == 1
+    assert 'fake_path3' in generate.pages
+
     # for we don't include page in dts dt3 is not in generate.dts
     assert dt1.year in generate.dts
     assert dt2.year in generate.dts
