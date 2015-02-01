@@ -115,7 +115,27 @@ def test_main_indices():
 
 
 def test_pages():
-    pass
+    generate = Generate()
+
+    dt1 = datetime.datetime.now()
+    dt2 = dt1 - datetime.timedelta(400)  # another year
+    dt3 = dt1 + datetime.timedelta(35)  # another month
+    fake_pages = {
+        'fake_path1': {
+            'dt': dt1.isoformat(),
+            'set_link': True
+        },
+        'fake_path2': {
+            'dt': dt2.isoformat(),
+            'set_link': True
+        },
+        'fake_path3': {
+            'dt': dt3.isoformat(),
+            'set_link': True
+        }
+    }
+    generate.pages = fake_pages
+    generate.config = {'output': {'path': 'output/'}}
 
 
 def test_comments():
