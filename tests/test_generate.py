@@ -123,19 +123,40 @@ def test_pages():
     fake_pages = {
         'fake_path1': {
             'dt': dt1.isoformat(),
-            'set_link': True
+            'set_link': True,
+            'slug': 'fake_slug1'
         },
         'fake_path2': {
             'dt': dt2.isoformat(),
-            'set_link': True
+            'set_link': True,
+            'slug': 'fake_slug2'
         },
         'fake_path3': {
             'dt': dt3.isoformat(),
-            'set_link': True
+            'set_link': True,
+            'slug': 'fake_slug3'
         }
     }
-    generate.pages = fake_pages
-    generate.config = {'output': {'path': 'output/'}}
+    generate.posts = fake_pages
+    generate.pages = [path for path in fake_pages]
+    # generate.config = {'output': {'path': 'output/'}}
+    generate.out_path = 'output/'
+    os.makedirs(generate.out_path)
+    for path in fake_pages:
+        os.makedirs(path)
+        with open(os.path.join(path, 'fake_post.ipynb'), 'w') as fake_post:
+            fake_post.write('fake_data')
+
+    with mock.patch.object(generate, '_process_ipynb') as mock_ipynb:
+        generate._generate_pages()
+
+    mock_ipynb.assert_called()
+
+    if os.path.exists(generate.out_path):
+        shutil.rmtree(generate.out_path)
+    for path in fake_pages:
+        if os.path.exists(path):
+            shutil.rmtree(path)
 
 
 def test_comments():

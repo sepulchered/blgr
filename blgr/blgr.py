@@ -152,7 +152,7 @@ class Generate(BlgrCommand):
 
             fls = os.listdir(page)
             psts = [pst for pst in fls if pst.endswith('.ipynb')]
-            pp = os.path.join(self.prj_path, page, psts[0])
+            pp = os.path.join(page, psts[0])
             self._process_ipynb(page_path, pp)
 
     def _generate_comments(self):
