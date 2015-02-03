@@ -207,7 +207,39 @@ def test_comments():
 
 
 def test_menu():
-    pass
+    template_path = 'templates/'
+    os.makedirs(template_path)
+    with open(os.path.join(template_path, 'menu.html'), 'w') as comments_template:
+        comments_template.write("{% for page in pages %}{{page['slug']}}{% endfor %}")
+
+    fake_posts = {
+        'fake_path1': {
+            'set_link': True,
+            'slug': 'fake_slug1'
+        },
+        'fake_path2': {
+            'set_link': True,
+            'slug': 'fake_slug2'
+        }
+    }
+    fake_pages = [k for k in fake_posts]
+
+    generate = Generate()
+    generate.posts = fake_posts
+    generate.pages = fake_pages
+
+    jloader = jinja2.FileSystemLoader(searchpath=template_path)
+    generate.tmpl_env = jinja2.Environment(loader=jloader)
+
+    generate._generate_menu()
+
+    for data in fake_posts.values():
+        data['url'] = '/{}/'.format(data['slug'])
+    assert generate.menu_pages == [data for data in fake_posts.values()]
+    assert generate.menu == ''.join((data['slug'] for data in fake_posts.values()))
+
+    if os.path.exists(template_path):
+        shutil.rmtree(template_path)
 
 
 def test_year_index():
