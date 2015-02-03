@@ -160,7 +160,24 @@ def test_pages():
 
 
 def test_comments():
-    pass
+    template_path = 'templates/'
+    config = {'disqus': 'fake_disqus_id'}
+
+    generate = Generate()
+    jloader = jinja2.FileSystemLoader(searchpath=template_path)
+    generate.tmpl_env = jinja2.Environment(loader=jloader)
+    generate.config = config
+
+    os.makedirs(template_path)
+    with open(os.path.join(template_path, 'comments.html'), 'w') as comments_template:
+        comments_template.write('{{disqus}}')
+
+    generate._generate_comments()
+
+    assert generate.comments == config['disqus']
+
+    if os.path.exists(template_path):
+        shutil.rmtree(template_path)
 
 
 def test_menu():
