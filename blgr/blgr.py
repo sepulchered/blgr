@@ -137,10 +137,10 @@ class Generate(BlgrCommand):
             else:
                 self.pages.append(pp)
 
-    def _generate_main_indices(self, posts):
+    def _generate_main_index(self, posts, header='Main index'):
         tmpl = self.tmpl_env.get_template('index.html')
         main_indx_path = os.path.join(self.out_path, 'index.html')
-        main_indx = tmpl.render({'header': 'Main index', 'posts': posts, 'pages': self.menu_pages})
+        main_indx = tmpl.render({'header': header, 'posts': posts, 'pages': self.menu_pages})
         with open(main_indx_path, 'w') as indx:
             indx.write(main_indx)
 
@@ -276,7 +276,7 @@ class Generate(BlgrCommand):
                 self._generate_month_index(month_path, month_posts, (year, month))
             self._generate_year_index(year_path, year_posts, year)
         self._generate_categories(categories)
-        self._generate_main_indices(all_posts)
+        self._generate_main_index(all_posts)
 
     def execute(self):
         self._generate_menu()

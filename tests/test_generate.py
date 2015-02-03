@@ -110,8 +110,34 @@ def test_pages_dts():
     assert 'fake_path2' in generate.dts[dt2.year][dt2.month][dt2.day]
 
 
-def test_main_indices():
-    pass
+def test_main_index():
+    out_path = 'output/'
+    os.makedirs(out_path)
+
+    template_path = 'templates/'
+    os.makedirs(template_path)
+    with open(os.path.join(template_path, 'index.html'), 'w') as main_index_template:
+        main_index_template.write('{{header}}-{{posts}}-{{pages}}')
+
+    fake_vars = {'header': 'fake_header', 'posts': 'fake_posts', 'pages': 'fake_pages'}
+
+    generate = Generate()
+    generate.out_path = out_path
+    jloader = jinja2.FileSystemLoader(searchpath=template_path)
+    generate.tmpl_env = jinja2.Environment(loader=jloader)
+    generate.menu_pages = fake_vars['pages']
+
+    generate._generate_main_index(fake_vars['posts'], header=fake_vars['header'])
+    assert os.path.exists(os.path.join(out_path, 'index.html'))
+    rendered = False
+    with open(os.path.join(out_path, 'index.html'), 'r') as rtmpl:
+        rendered = rtmpl.read()
+    assert rendered == '{header}-{posts}-{pages}'.format(**fake_vars)
+
+    if os.path.exists(template_path):
+        shutil.rmtree(template_path)
+    if os.path.exists(out_path):
+        shutil.rmtree(out_path)
 
 
 def test_pages():
