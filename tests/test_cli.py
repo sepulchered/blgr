@@ -1,5 +1,19 @@
 from unittest.mock import patch
-from blgr.blgr import BlgrCli, Create
+
+from nose.tools import assert_raises
+
+from blgr.blgr import BlgrCli, Create, BlgrCommand
+
+
+def test_blgr_command():
+    blgr_command = BlgrCommand()
+
+    assert blgr_command.parser is None
+    assert blgr_command.config is None
+
+    assert_raises(NotImplementedError, blgr_command.add_args)
+    assert_raises(NotImplementedError, blgr_command.prepare)
+    assert_raises(NotImplementedError, blgr_command.execute)
 
 
 def test_reads_config_from_args():
