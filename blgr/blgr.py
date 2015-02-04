@@ -168,10 +168,12 @@ class Generate(BlgrCommand):
         tmpl = self.tmpl_env.get_template('menu.html')
         self.menu = tmpl.render({'pages': self.menu_pages})
 
-    def _generate_year_index(self, year_path, posts, year):
+    def _generate_year_index(self, year_path, posts, year, header=None):
         indx_path = os.path.join(year_path, 'index.html')
         tmpl = self.tmpl_env.get_template('index.html')
-        indx = tmpl.render({'header': 'Year {}'.format(year), 'posts': posts})
+        if header is None:
+            header = 'Year {}'.format(year)
+        indx = tmpl.render({'header': header, 'posts': posts})
         with open(indx_path, 'w') as cindex:
             cindex.write(indx)
 
