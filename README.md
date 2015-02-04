@@ -1,5 +1,7 @@
 # blgr
 
+[![Join the chat at https://gitter.im/sepulchered/blgr](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sepulchered/blgr?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Static blog generator for using with ipython notebooks.
 It's in alpha stage now thus don't expect much.
 
