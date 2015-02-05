@@ -186,12 +186,13 @@ class Generate(BlgrCommand):
         with open(indx_path, 'w') as cindex:
             cindex.write(indx)
 
-    def _generate_day_index(self, day_path, posts, year_month_day):
+    def _generate_day_index(self, day_path, posts, year_month_day, header=None):
+        if header is None:
+            header = 'Year {} Month {} Day {}'.format(year_month_day[0], year_month_day[1],
+                                                      year_month_day[2])
         indx_path = os.path.join(day_path, 'index.html')
         tmpl = self.tmpl_env.get_template('index.html')
-        indx = tmpl.render({'header': 'Year {} Month {} Day {}'.format(year_month_day[0], year_month_day[1],
-                                                                       year_month_day[2]),
-                            'posts': posts, 'pages': self.menu_pages})
+        indx = tmpl.render({'header': header, 'posts': posts})
         with open(indx_path, 'w') as cindex:
             cindex.write(indx)
 
