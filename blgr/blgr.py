@@ -177,11 +177,12 @@ class Generate(BlgrCommand):
         with open(indx_path, 'w') as cindex:
             cindex.write(indx)
 
-    def _generate_month_index(self, month_path, posts, year_month):
+    def _generate_month_index(self, month_path, posts, year_month, header=None):
+        if header is None:
+            header = 'Year {} Month {}'.format(year_month[0], year_month[1])
         indx_path = os.path.join(month_path, 'index.html')
         tmpl = self.tmpl_env.get_template('index.html')
-        indx = tmpl.render({'header': 'Year {} Month {}'.format(year_month[0], year_month[1]),
-                            'posts': posts, 'pages': self.menu_pages})
+        indx = tmpl.render({'header': header, 'posts': posts})
         with open(indx_path, 'w') as cindex:
             cindex.write(indx)
 

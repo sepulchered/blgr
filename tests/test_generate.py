@@ -278,7 +278,43 @@ def test_year_index():
 
 
 def test_month_index():
-    pass
+    template_path = 'templates/'
+    os.makedirs(template_path)
+    with open(os.path.join(template_path, 'index.html'), 'w') as comments_template:
+        comments_template.write("{{header}}{% for post in posts %}{{post['slug']}}{% endfor %}")
+
+    year = 2015
+    month = 5
+    header = 'header'
+    output_path = 'output/'
+    month_path = os.path.join(output_path, '{}/{}/'.format(year, month))
+    os.makedirs(month_path)
+    fake_posts = [
+        {
+            'slug': 'fake_slug1'
+        }
+    ]
+
+    generate = Generate()
+    jloader = jinja2.FileSystemLoader(searchpath=template_path)
+    generate.tmpl_env = jinja2.Environment(loader=jloader)
+
+    generate._generate_month_index(month_path, fake_posts, year, header)
+
+    assert os.path.exists(os.path.join(month_path, 'index.html'))
+
+    data = None
+    fake_data = '{header}{slug}'.format(header=header, slug=fake_posts[0]['slug'])
+    with open(os.path.join(month_path, 'index.html'), 'r') as month_indx_template:
+        data = month_indx_template.read()
+
+    assert data is not None
+    assert data == fake_data
+
+    if os.path.exists(template_path):
+        shutil.rmtree(template_path)
+    if os.path.exists(output_path):
+        shutil.rmtree(output_path)
 
 
 def test_day_index():
