@@ -1,10 +1,9 @@
 # blgr
+![Codship Build Status](https://codeship.com/projects/23f344f0-88ee-0132-d13f-02ce2f7c7d8a/status?branch=master)
+[![Join the chat at https://gitter.im/sepulchered/blgr](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sepulchered/blgr?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Static blog generator for using with ipython notebooks.
 It's in alpha stage now thus don't expect much.
-
-![Codship Build Status](https://codeship.com/projects/23f344f0-88ee-0132-d13f-02ce2f7c7d8a/status?branch=master)
-
 
 ## Usage
 
