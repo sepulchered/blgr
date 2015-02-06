@@ -398,7 +398,23 @@ def test_category_index():
 
 
 def test_generate_categories():
-    pass
+    generate = Generate()
+    config = {'output': {'path': 'output/'}}
+    os.makedirs(config['output']['path'])
+    generate.config = config
+    categories = {'fake_cat1': None, 'fake_cat2': None, 'fake_cat3': None}
+    cats = (os.path.join(config['output']['path'], cat) for cat in categories)
+
+    with mock.patch.object(generate, '_generate_category_index') as mock_gen_cat:
+        generate._generate_categories(categories)
+
+    mock_gen_cat.assert_called()
+
+    for cat in cats:
+        assert os.path.exists(cat)
+
+    if os.path.exists(config['output']['path']):
+        shutil.rmtree(config['output']['path'])
 
 
 def test_process_ipynb():
