@@ -196,10 +196,12 @@ class Generate(BlgrCommand):
         with open(indx_path, 'w') as cindex:
             cindex.write(indx)
 
-    def _generate_category_index(self, category, cat_path, posts):
+    def _generate_category_index(self, category, cat_path, posts, header=None):
+        if header is None:
+            header = category
         indx_path = os.path.join(cat_path, 'index.html')
         tmpl = self.tmpl_env.get_template('index.html')
-        indx = tmpl.render({'header': category, 'posts': posts, 'pages': self.menu_pages})
+        indx = tmpl.render({'header': header, 'posts': posts})
         with open(indx_path, 'w') as cindex:
             cindex.write(indx)
 

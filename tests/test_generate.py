@@ -359,7 +359,42 @@ def test_day_index():
 
 
 def test_category_index():
-    pass
+    template_path = 'templates/'
+    os.makedirs(template_path)
+    with open(os.path.join(template_path, 'index.html'), 'w') as comments_template:
+        comments_template.write("{{header}}{% for post in posts %}{{post['slug']}}{% endfor %}")
+
+    header = 'header'
+    category = 'fake_cat'
+    output_path = 'output/'
+    cat_path = os.path.join(output_path, '{}'.format(category))
+    os.makedirs(cat_path)
+    fake_posts = [
+        {
+            'slug': 'fake_slug1'
+        }
+    ]
+
+    generate = Generate()
+    jloader = jinja2.FileSystemLoader(searchpath=template_path)
+    generate.tmpl_env = jinja2.Environment(loader=jloader)
+
+    generate._generate_category_index(category, cat_path, fake_posts, header)
+
+    assert os.path.exists(os.path.join(cat_path, 'index.html'))
+
+    data = None
+    fake_data = '{header}{slug}'.format(header=header, slug=fake_posts[0]['slug'])
+    with open(os.path.join(cat_path, 'index.html'), 'r') as cat_indx_template:
+        data = cat_indx_template.read()
+
+    assert data is not None
+    assert data == fake_data
+
+    if os.path.exists(template_path):
+        shutil.rmtree(template_path)
+    if os.path.exists(output_path):
+        shutil.rmtree(output_path)
 
 
 def test_generate_categories():
