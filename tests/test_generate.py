@@ -418,7 +418,41 @@ def test_generate_categories():
 
 
 def test_process_ipynb():
-    pass
+    generate = Generate()
+    generate.prj_path = os.path.dirname(os.path.abspath(__file__))
+
+    out_path = os.path.join(generate.prj_path, 'output/')
+    os.makedirs(out_path)
+    posts_path = os.path.join(generate.prj_path, 'post/')
+    os.makedirs(posts_path)
+    post_path = os.path.join(posts_path, 'post.ipynb')
+    ipynb = {
+        "metadata": {
+            "name": "",
+            "signature": ""
+        },
+        "nbformat": 3,
+        "nbformat_minor": 0,
+        "worksheets": [
+            {
+                "cells": [],
+                "metadata": {}
+            }
+        ]
+    }
+    with open(post_path, 'w') as post:
+        json.dump(ipynb, post)
+
+    with mock.patch.object(generate, '_append_html') as mock_append_html:
+        generate._process_ipynb(out_path, post_path, True)
+    mock_append_html.assert_called_once_with(os.path.join(out_path, 'index.html'), True)
+
+    assert os.path.exists(os.path.join(out_path, 'index.html'))
+
+    if os.path.exists(out_path):
+        shutil.rmtree(out_path)
+    if os.path.exists(posts_path):
+        shutil.rmtree(posts_path)
 
 
 def test_append_html():
