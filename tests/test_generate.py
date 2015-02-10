@@ -5,6 +5,7 @@ import datetime
 from unittest import mock
 
 import jinja2
+from bs4 import BeautifulSoup
 
 from blgr.blgr import Generate
 
@@ -456,7 +457,43 @@ def test_process_ipynb():
 
 
 def test_append_html():
-    pass
+    generate = Generate()
+    fake_comments = 'fake_comments'
+    comments = '<div id="fake_comments">%s</div>' % fake_comments
+    fake_menu = 'fake_menu'
+    menu = '<div id="fake_menu">%s</div>' % fake_menu
+    generate.comments = comments
+    generate.menu = menu
+
+    out_path = 'output/'
+    os.makedirs(out_path)
+    path = os.path.join(out_path, 'test.html')
+    with open(path, 'w') as fake_html:
+        fake_html.write('<!doctype html><html><body><div id="notebook-container"></div></body></html>')
+
+    generate._append_html(path, False)
+    with open(path, 'r') as fake_html:
+        soup = BeautifulSoup(fake_html)
+        menu = soup.find(id='fake_menu')
+        comments = soup.find(id='fake_comments')
+
+        assert menu is not None
+        assert menu.string.strip() == fake_menu
+        assert comments is None
+
+    generate._append_html(path, True)
+    with open(path, 'r') as fake_html:
+        soup = BeautifulSoup(fake_html)
+        menu = soup.find(id='fake_menu')
+        comments = soup.find(id='fake_comments')
+
+        assert menu is not None
+        assert menu.string.strip() == fake_menu
+        assert comments is not None
+        assert comments.string.strip() == fake_comments
+
+    if os.path.exists(out_path):
+        shutil.rmtree(out_path)
 
 
 def test_generate_posts():
