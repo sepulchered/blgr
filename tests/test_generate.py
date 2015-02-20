@@ -496,6 +496,75 @@ def test_append_html():
         shutil.rmtree(out_path)
 
 
+def test_generate_post():
+    generate = Generate()
+
+    fake_post1 = 'fake_post1'
+    fake_post2 = 'fake_post2'
+    fake_day_path = 'output/day/'
+    fake_prj_path = 'output'
+    fake_slug = 'fake_slug'
+    fake_category = 'fake_category'
+    fake_posts = {
+        fake_post1: {'slug': fake_slug, 'category': fake_category, 'comments': False},
+        fake_post2: {'slug': fake_slug, 'comments': True}
+    }
+    fake_date = {'year': 2015, 'month': 3, 'day': 22}
+    fake_categories = {}
+    os.makedirs(fake_day_path)
+    os.makedirs(fake_post1)
+    os.makedirs(fake_post2)
+    ipynb = {
+        "metadata": {
+            "name": "",
+            "signature": ""
+        },
+        "nbformat": 3,
+        "nbformat_minor": 0,
+        "worksheets": [
+            {
+                "cells": [],
+                "metadata": {}
+            }
+        ]
+    }
+
+    with open(os.path.join(fake_post1, 'test.ipynb'), 'w') as nb:
+        json.dump(ipynb, nb)
+    with open(os.path.join(fake_post2, 'test.ipynb'), 'w') as nb:
+        json.dump(ipynb, nb)
+
+    generate.posts = fake_posts
+    generate.prj_path = fake_prj_path
+
+    with mock.patch.object(generate, '_process_ipynb') as mock_process_ipynb:
+        pd = generate._generate_post(fake_post1, fake_day_path, fake_categories, **fake_date)
+
+    assert mock_process_ipynb.called_once_with(os.path.join(fake_day_path, fake_slug),
+                                               os.path.join(fake_prj_path, fake_post1, 'test.ipynb'),
+                                               False)
+    assert pd['url'] == '/{}/{}/{}/{}/'.format(fake_date['year'], fake_date['month'],
+                                               fake_date['day'], fake_slug)
+    assert fake_category in fake_categories.keys()
+
+    with mock.patch.object(generate, '_process_ipynb') as mock_process_ipynb:
+        pd = generate._generate_post(fake_post2, fake_day_path, fake_categories, **fake_date)
+
+    assert mock_process_ipynb.called_once_with(os.path.join(fake_day_path, fake_slug),
+                                               os.path.join(fake_prj_path, fake_post2, 'test.ipynb'),
+                                               True)
+    assert pd['url'] == '/{}/{}/{}/{}/'.format(fake_date['year'], fake_date['month'],
+                                               fake_date['day'], fake_slug)
+    assert 'uncategorized' in fake_categories.keys()
+
+    if os.path.exists(fake_day_path):
+        shutil.rmtree(fake_day_path)
+    if os.path.exists(fake_post1):
+        shutil.rmtree(fake_post1)
+    if os.path.exists(fake_post2):
+        shutil.rmtree(fake_post2)
+
+
 def test_generate_posts():
     pass
 

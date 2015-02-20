@@ -236,6 +236,22 @@ class Generate(BlgrCommand):
         with open(path, 'w') as pg:
             pg.write(res)
 
+    def _generate_post(self, post, day_path, categories, year, month, day):
+        slug = self.posts[post]['slug']
+        slug_path = os.path.join(day_path, slug)
+        cat = self.posts[post]['category'] if self.posts[post].get('category') else 'uncategorized'
+        pd = {'url': '/{}/{}/{}/{}/'.format(year, month, day, slug)}
+        pd.update(self.posts[post])
+        categories.setdefault(cat, []).append(pd)
+        if not os.path.exists(slug_path):
+            os.mkdir(slug_path)
+
+        fls = os.listdir(post)
+        psts = [pst for pst in fls if pst.endswith('.ipynb')]
+        pp = os.path.join(self.prj_path, post, psts[0])
+        self._process_ipynb(slug_path, pp, pd['comments'])
+        return pd
+
     def _generate_posts(self):
         all_posts = []
         categories = {}
@@ -258,19 +274,7 @@ class Generate(BlgrCommand):
                         os.mkdir(day_path)
 
                     for post in self.dts[year][month][day]:
-                        slug = self.posts[post]['slug']
-                        slug_path = os.path.join(day_path, slug)
-                        cat = self.posts[post]['category'] if self.posts[post]['category'] else 'uncategorized'
-                        pd = {'url': '/{}/{}/{}/{}/'.format(year, month, day, slug)}
-                        pd.update(self.posts[post])
-                        categories.setdefault(cat, []).append(pd)
-                        if not os.path.exists(slug_path):
-                            os.mkdir(slug_path)
-
-                        fls = os.listdir(post)
-                        psts = [pst for pst in fls if pst.endswith('.ipynb')]
-                        pp = os.path.join(self.prj_path, post, psts[0])
-                        self._process_ipynb(slug_path, pp, pd['comments'])
+                        pd = self._generate_post(post, day_path, year, month, day, categories)
                         all_posts.append(pd)
 
 
