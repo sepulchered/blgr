@@ -540,7 +540,7 @@ def test_generate_post():
     with mock.patch.object(generate, '_process_ipynb') as mock_process_ipynb:
         pd = generate._generate_post(fake_post1, fake_day_path, fake_categories, **fake_date)
 
-    assert mock_process_ipynb.called_once_with(os.path.join(fake_day_path, fake_slug),
+    mock_process_ipynb.assert_called_once_with(os.path.join(fake_day_path, fake_slug),
                                                os.path.join(fake_prj_path, fake_post1, 'test.ipynb'),
                                                False)
     assert pd['url'] == '/{}/{}/{}/{}/'.format(fake_date['year'], fake_date['month'],
@@ -550,7 +550,7 @@ def test_generate_post():
     with mock.patch.object(generate, '_process_ipynb') as mock_process_ipynb:
         pd = generate._generate_post(fake_post2, fake_day_path, fake_categories, **fake_date)
 
-    assert mock_process_ipynb.called_once_with(os.path.join(fake_day_path, fake_slug),
+    mock_process_ipynb.assert_called_once_with(os.path.join(fake_day_path, fake_slug),
                                                os.path.join(fake_prj_path, fake_post2, 'test.ipynb'),
                                                True)
     assert pd['url'] == '/{}/{}/{}/{}/'.format(fake_date['year'], fake_date['month'],
@@ -566,7 +566,65 @@ def test_generate_post():
 
 
 def test_generate_posts():
-    pass
+    fake_out_path = 'output/'
+    fake_dts = {
+        2014: {
+            1: {
+                1: {
+                    'fake_post': {}
+                }
+            },
+            2: {
+                1: {
+                    'fake_post': {}
+                },
+                2: {
+                    'fake_post': {}
+                }
+            },
+        },
+        2015: {
+            1: {
+                1: {
+                    'fake_post': {}
+                }
+            }
+        }
+    }
+
+    generate = Generate()
+    generate.out_path = fake_out_path
+    generate.dts = fake_dts
+
+    with mock.patch.object(generate, '_generate_post') as mock_gen_post:
+        with mock.patch.object(generate, '_generate_day_index') as mock_gen_day_index:
+            with mock.patch.object(generate, '_generate_month_index') as mock_gen_month_index:
+                with mock.patch.object(generate, '_generate_year_index') as mock_gen_year_index:
+                    with mock.patch.object(generate, '_generate_categories') as mock_gen_categories:
+                        with mock.patch.object(generate, '_generate_main_index') as mock_gen_main_index:
+                            generate._generate_posts()
+
+    mock_gen_post.assert_called()
+    mock_gen_day_index.assert_called()
+    mock_gen_month_index.assert_called()
+    mock_gen_year_index.assert_called()
+    mock_gen_categories.assert_called()
+    mock_gen_main_index.assert_called()
+
+    years = os.listdir(fake_out_path)
+    for year in fake_dts:
+        assert str(year) in years
+        year_path = os.path.join(fake_out_path, str(year))
+        months = os.listdir(year_path)
+        for month in fake_dts[year]:
+            assert str(month) in months
+            month_path = os.path.join(year_path, str(month))
+            days = os.listdir(month_path)
+            for day in fake_dts[year][month]:
+                assert str(day) in days
+
+    if os.path.exists(fake_out_path):
+        shutil.rmtree(fake_out_path)
 
 
 def test_execute():
